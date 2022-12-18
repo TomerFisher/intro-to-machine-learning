@@ -1,2 +1,2 @@
 # intro-to-machine-learning
-Homework in Introduction to Machine Learning course
+Homework in 'Introduction to Machine Learning' course
