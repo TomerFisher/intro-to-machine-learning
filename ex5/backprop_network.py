@@ -21,6 +21,7 @@ class Network(object):
         convention we won't set any biases for those neurons, since biases are 
         only ever used in computing the output from later layers.'
         """
+        
         self.num_layers = len(sizes)
         self.sizes = sizes
         self.biases = [np.random.randn(y, 1) for y in sizes[1:]]
@@ -35,6 +36,10 @@ class Network(object):
         The ``training_data`` is a list of tuples ``(x, y)`` representing the
         training inputs and the desired outputs.
         """
+        
+        train_accuracy = np.zeros(epochs)
+        train_loss = np.zeros(epochs)
+        test_accuracy = np.zeros(epochs)
         print("Initial test accuracy: {0}".format(self.one_label_accuracy(test_data)))
         n = len(training_data)
         for j in range(epochs):
@@ -43,7 +48,11 @@ class Network(object):
                             for k in range(0, n, mini_batch_size)]
             for mini_batch in mini_batches:
                 self.update_mini_batch(mini_batch, learning_rate)
-            print("Epoch {0} test accuracy: {1}".format(j, self.one_label_accuracy(test_data)))
+            train_accuracy[j] = self.one_hot_accuracy(training_data)
+            train_loss[j] = self.loss(training_data)
+            test_accuracy[j] = self.one_label_accuracy(test_data)
+            print("Epoch {0} test accuracy: {1}".format(j, test_accuracy[j]))
+        return train_accuracy, train_loss, test_accuracy
     
     
     def update_mini_batch(self, mini_batch, learning_rate):
@@ -71,12 +80,13 @@ class Network(object):
         vector y. The function should return a tuple of two lists (db, dw) as 
         described in the assignment pdf.
         """
+        
         v = [np.zeros((y, 1)) for y in self.sizes[1:]]
         z = [np.zeros((y, 1)) for y in self.sizes]
         z[0] = x
-        for layer in range(0, len(self.sizes) - 1):
+        for layer in range(0, self.num_layers - 1):
             v[layer] = np.dot(self.weights[layer], z[layer]) + self.biases[layer]
-            if layer == len(self.sizes) - 2:
+            if layer == self.num_layers - 2:
                 z[layer + 1] = self.output_softmax(v[layer])
             else:
                 z[layer + 1] = relu(v[layer])
@@ -150,13 +160,13 @@ class Network(object):
         delta = [np.zeros(vector.shape) for vector in v]
         db = [np.zeros(b.shape) for b in self.biases]
         dw = [np.zeros(w.shape) for w in self.weights]
-        for layer in range(len(self.sizes) - 1, 0, -1):
-            if layer == len(self.sizes) - 1:
+        for layer in range(self.num_layers - 1, 0, -1):
+            if layer == self.num_layers - 1:
                 delta[layer - 1] = z[layer] - y
                 dw[layer - 1] = np.dot(z[layer] - y, z[layer - 1].transpose())
                 db[layer - 1] = z[layer] - y
             else:
-                if layer == len(self.sizes) - 2:
+                if layer == self.num_layers - 2:
                     delta[layer - 1] = np.dot(self.weights[layer].transpose(), delta[layer])
                 else:
                     delta[layer - 1] = np.dot(self.weights[layer].transpose(),
